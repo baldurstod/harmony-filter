@@ -19,8 +19,6 @@ export enum CriterionNumberOperator {
 	LessEqual = '<=',
 	GreaterThan = '>',
 	GreaterEqual = '<=',
-	StartsWith = 'starts_with',
-	EndsWith = 'ends_with',
 }
 
 export enum CriterionStringOperator {
@@ -86,13 +84,79 @@ export class Criterion {
 	#matchFilter(item: any, args?: any): boolean {
 		switch (this.operator) {
 			case CriterionStringOperator.Equal:
-				break;
+			case CriterionStringOperator.NotEqual:
+			case CriterionStringOperator.StartsWith:
+			case CriterionStringOperator.EndsWith:
+			case CriterionStringOperator.Includes:
+				return this.#matchString(item, args);
+			case CriterionNumberOperator.Equal:
+			case CriterionNumberOperator.NotEqual:
+			case CriterionNumberOperator.LessThan:
+			case CriterionNumberOperator.LessEqual:
+			case CriterionNumberOperator.GreaterThan:
+			case CriterionNumberOperator.GreaterEqual:
+				return this.#matchNumber(item, args);
 			case CriterionFilterOperator:
 				return (this.value as Filter).matchFilter(item, args);
 			case CriterionFunctionOperator:
 				return (this.value as CriterionCallback)(item, args);
+			default:
+				return false;
 		}
-		return false;
+	}
+
+	#matchString(item: any, args?: any): boolean {
+		let value = String(this.#getValue(item));
+		if (this.trim) {
+			value = value.trim();
+		}
+		let reference = String(this.value);
+		if (!this.matchCase) {
+			value = value.toLowerCase();
+			reference = reference.toLowerCase();
+		}
+		switch (this.operator) {
+			case CriterionStringOperator.Equal:
+				return value == reference;
+			case CriterionStringOperator.NotEqual:
+				return value != reference;
+			case CriterionStringOperator.StartsWith:
+				return value.startsWith(reference);
+			case CriterionStringOperator.EndsWith:
+				return value.endsWith(reference);
+			case CriterionStringOperator.Includes:
+				return value.includes(reference);
+			default:
+				return false;
+		}
+	}
+
+	#matchNumber(item: any, args?: any): boolean {
+		const value = Number(this.#getValue(item));
+		switch (this.operator) {
+			case CriterionNumberOperator.Equal:
+				return value == this.value;
+			case CriterionNumberOperator.NotEqual:
+				return value != this.value;
+			case CriterionNumberOperator.LessThan:
+				return value < (this.value as number);
+			case CriterionNumberOperator.LessEqual:
+				return value <= (this.value as number);
+			case CriterionNumberOperator.GreaterThan:
+				return value > (this.value as number);
+			case CriterionNumberOperator.GreaterEqual:
+				return value >= (this.value as number);
+			default:
+				return false;
+		}
+	}
+
+	#getValue(item: any): any {
+		if (!this.property) {
+			return item;
+		}
+		return item?.[this.property];
+
 	}
 }
 
