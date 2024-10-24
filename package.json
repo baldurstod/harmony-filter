@@ -2,5 +2,5 @@
   "name": "harmony-filter",
   "version": "0.0.1",
   "description": "Extensible typescript filter",
-	"main": "./src/index"
+	"main": "./index"
 }
