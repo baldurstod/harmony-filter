@@ -48,7 +48,7 @@ type CriterionParams = {
 
 type FilterParams = {
 	condition?: FilterCondition,
-	subFilters?: Array<FilterParams> | Set<FilterParams>,
+	//subFilters?: Array<FilterParams> | Set<FilterParams>,
 	criteria?: Array<CriterionParams> | Set<CriterionParams>,
 };
 
@@ -71,8 +71,8 @@ export class Criterion {
 		this.invert = params.invert ?? false;
 	}
 
-	matchFilter(item: any, args?: any): boolean {
-		const match = this.#matchFilter(item, args);
+	match(item: any, args?: any): boolean {
+		const match = this.#match(item, args);
 
 		if (this.invert) {
 			return !match;
@@ -81,7 +81,7 @@ export class Criterion {
 		}
 	}
 
-	#matchFilter(item: any, args?: any): boolean {
+	#match(item: any, args?: any): boolean {
 		switch (this.operator) {
 			case CriterionStringOperator.Equal:
 			case CriterionStringOperator.NotEqual:
@@ -97,7 +97,7 @@ export class Criterion {
 			case CriterionNumberOperator.GreaterEqual:
 				return this.#matchNumber(item, args);
 			case CriterionFilterOperator:
-				return (this.value as Filter).matchFilter(item, args);
+				return (this.value as Filter).match(item, args);
 			case CriterionFunctionOperator:
 				return (this.value as CriterionCallback)(item, args);
 			default:
@@ -182,9 +182,9 @@ export class Filter {
 		*/
 	}
 
-	matchFilter(item: any, args?: any): boolean {
+	match(item: any, args?: any): boolean {
 		for (const criterion of this.#criteria) {
-			const criterionResult = criterion.matchFilter(item, args);
+			const criterionResult = criterion.match(item, args);
 			if ((criterionResult && this.condition == FilterCondition.None) ||
 				(!criterionResult && this.condition == FilterCondition.All)) {
 				return false;
